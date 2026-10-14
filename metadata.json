@@ -1,0 +1,8 @@
+{
+  "name": "Milypico Punto de Venta - Flutter",
+  "description": "Offline-First Punto de Venta (POS) con carritos multi-cliente, multi-divisa y respaldo en Google Drive.\nConstruido enteramente con Flutter.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
