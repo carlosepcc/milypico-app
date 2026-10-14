@@ -32,9 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        backgroundColor: const Color(0xFF0F172A),
-        indicatorColor: const Color(0xFF10B981).withValues(alpha: 0.25),
-        elevation: 8,
         onDestinationSelected: (idx) {
           setState(() {
             _currentIndex = idx;
@@ -42,28 +39,28 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.point_of_sale_outlined, color: Colors.white70),
-            selectedIcon: Icon(Icons.point_of_sale, color: Color(0xFF34D399)),
-            label: 'POS',
+            icon: Icon(Icons.point_of_sale_outlined),
+            selectedIcon: Icon(Icons.point_of_sale),
+            label: 'Caja POS',
           ),
           NavigationDestination(
-            icon: Icon(Icons.history_toggle_off, color: Colors.white70),
-            selectedIcon: Icon(Icons.history_toggle_off, color: Color(0xFF34D399)),
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
             label: 'Sesiones',
           ),
           NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined, color: Colors.white70),
-            selectedIcon: Icon(Icons.inventory_2, color: Color(0xFF34D399)),
+            icon: Icon(Icons.inventory_2_outlined),
+            selectedIcon: Icon(Icons.inventory_2),
             label: 'Catálogo',
           ),
           NavigationDestination(
-            icon: Icon(Icons.currency_exchange, color: Colors.white70),
-            selectedIcon: Icon(Icons.currency_exchange, color: Color(0xFF34D399)),
+            icon: Icon(Icons.currency_exchange_outlined),
+            selectedIcon: Icon(Icons.currency_exchange),
             label: 'Divisas',
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings_outlined, color: Colors.white70),
-            selectedIcon: Icon(Icons.settings, color: Color(0xFF34D399)),
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
             label: 'Ajustes',
           ),
         ],

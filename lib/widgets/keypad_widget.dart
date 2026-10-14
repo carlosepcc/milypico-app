@@ -12,7 +12,7 @@ class KeypadWidget extends StatefulWidget {
 
   const KeypadWidget({
     super.key,
-    this.height = 280,
+    this.height = 290,
     this.onHeightChanged,
   });
 
@@ -26,6 +26,8 @@ class _KeypadWidgetState extends State<KeypadWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final pos = context.watch<POSProvider>();
     final currentCart = pos.currentCart;
     final selectedProduct = pos.selectedProductId != null ? pos.productLookup[pos.selectedProductId] : null;
@@ -122,23 +124,30 @@ class _KeypadWidgetState extends State<KeypadWidget> {
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, -3)),
+        color: colorScheme.surfaceContainer,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
         ],
       ),
       child: Column(
         children: [
-          // Drag handle & Info Bar
+          // Active Line Product Banner
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            color: const Color(0xFF0F172A),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
             child: Row(
               children: [
                 if (selectedProduct != null) ...[
-                  Text(selectedProduct.emoji, style: const TextStyle(fontSize: 20)),
-                  const SizedBox(width: 8),
+                  Text(selectedProduct.emoji, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,26 +155,27 @@ class _KeypadWidgetState extends State<KeypadWidget> {
                       children: [
                         Text(
                           selectedProduct.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
+                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          '\$${unitPrice.toStringAsFixed(1)} / ${selectedProduct.unit == UnitType.lb ? 'lb' : 'u'}',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
+                          '\$${unitPrice.toStringAsFixed(0)} CUP / ${selectedProduct.unit == UnitType.lb ? 'lb' : 'u'}',
+                          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
                   ),
                   if (cartItem != null) ...[
-                    // Tier badge
-                    InkWell(
-                      onTap: () {
-                        showDialog(
+                    // Price Tier Chip
+                    ActionChip(
+                      avatar: const Icon(Icons.sell_outlined, size: 14),
+                      label: Text(
+                        cartItem.selectedTier.name.toUpperCase(),
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        showModalBottomSheet(
                           context: context,
                           builder: (_) => PriceTierDialog(
                             product: selectedProduct,
@@ -174,49 +184,41 @@ class _KeypadWidgetState extends State<KeypadWidget> {
                           ),
                         );
                       },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF334155),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                        ),
-                        child: Text(
-                          cartItem.selectedTier.name.toUpperCase(),
-                          style: const TextStyle(color: Colors.amberAccent, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      ),
                     ),
-                    const SizedBox(width: 8),
-                    // Lock button
+                    const SizedBox(width: 4),
+                    // Line Lock Toggle Button
                     IconButton(
                       icon: Icon(
-                        isLocked ? Icons.lock : Icons.lock_open,
-                        size: 18,
-                        color: isLocked ? Colors.amber : Colors.white60,
+                        isLocked ? Icons.lock : Icons.lock_open_outlined,
+                        size: 20,
+                        color: isLocked ? colorScheme.error : colorScheme.onSurfaceVariant,
                       ),
+                      tooltip: isLocked ? 'Desbloquear línea' : 'Bloquear línea',
                       onPressed: () {
                         pos.toggleCartItemLock(currentCart!.id, cartItem!.id);
                       },
                     ),
                   ],
-                  // Subtotal indicator
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${currentQty % 1 == 0 ? currentQty.toInt() : currentQty.toStringAsFixed(2)} × \$${unitPrice.toStringAsFixed(0)} = \$${lineTotal.toStringAsFixed(0)}',
-                      style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.bold, fontSize: 12),
+                  // Subtotal Indicator
+                  Card.filled(
+                    color: colorScheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      child: Text(
+                        '${currentQty % 1 == 0 ? currentQty.toInt() : currentQty.toStringAsFixed(2)} × \$${unitPrice.toStringAsFixed(0)} = \$${lineTotal.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   ),
                 ] else ...[
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Selecciona un producto del catálogo',
-                      style: TextStyle(color: Colors.white60, fontSize: 13),
+                      'Toca un producto del catálogo para despachar',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],
@@ -224,77 +226,93 @@ class _KeypadWidgetState extends State<KeypadWidget> {
             ),
           ),
 
-          // Keypad Rows
+          // Keypad Buttons Grid
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(6.0),
               child: Row(
                 children: [
-                  // Numeric 4x3 grid
+                  // 3x4 Numeric pad
                   Expanded(
                     flex: 3,
                     child: Column(
                       children: [
-                        _buildRow(['7', '8', '9'], handleKeyPress),
-                        _buildRow(['4', '5', '6'], handleKeyPress),
-                        _buildRow(['1', '2', '3'], handleKeyPress),
-                        _buildRow(['C', '0', '.'], handleKeyPress),
+                        _buildRow(['7', '8', '9'], handleKeyPress, colorScheme),
+                        _buildRow(['4', '5', '6'], handleKeyPress, colorScheme),
+                        _buildRow(['1', '2', '3'], handleKeyPress, colorScheme),
+                        _buildRow(['C', '0', '.'], handleKeyPress, colorScheme),
                       ],
                     ),
                   ),
 
                   const SizedBox(width: 6),
 
-                  // Action side column
+                  // Actions Column
                   Expanded(
                     flex: 1,
                     child: Column(
                       children: [
-                        // Quick +1
                         Expanded(
-                          child: _buildActionBtn(
-                            label: '+1',
-                            color: const Color(0xFF334155),
-                            textColor: Colors.white,
-                            onTap: () => handleQuickStep(1.0),
+                          child: FilledButton.tonal(
+                            style: FilledButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () => handleQuickStep(1.0),
+                            child: const Text('+1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        // Quick +5
                         Expanded(
-                          child: _buildActionBtn(
-                            label: '+5',
-                            color: const Color(0xFF334155),
-                            textColor: Colors.white,
-                            onTap: () => handleQuickStep(5.0),
+                          child: FilledButton.tonal(
+                            style: FilledButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () => handleQuickStep(5.0),
+                            child: const Text('+5', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        // Backspace
                         Expanded(
-                          child: _buildActionBtn(
-                            label: '⌫',
-                            color: const Color(0xFF475569),
-                            textColor: Colors.amberAccent,
-                            onTap: () => handleKeyPress('⌫'),
+                          child: FilledButton.tonal(
+                            style: FilledButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () => handleKeyPress('⌫'),
+                            child: const Icon(Icons.backspace_outlined, size: 20),
                           ),
                         ),
                         const SizedBox(height: 4),
                         // Cobrar (Checkout) Button
                         Expanded(
-                          child: _buildActionBtn(
-                            label: 'Cobrar\n\$${cartTotal.toStringAsFixed(0)}',
-                            color: cartTotal > 0 ? const Color(0xFF10B981) : const Color(0xFF334155),
-                            textColor: Colors.white,
-                            isBold: true,
-                            onTap: cartTotal > 0
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: colorScheme.onPrimary,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: cartTotal > 0
                                 ? () {
-                                    showDialog(
+                                    showModalBottomSheet(
                                       context: context,
+                                      isScrollControlled: true,
                                       builder: (_) => CheckoutDialog(cart: currentCart!),
                                     );
                                   }
                                 : null,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text('COBRAR', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
+                                Text(
+                                  '\$${cartTotal.toStringAsFixed(0)}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -309,63 +327,34 @@ class _KeypadWidgetState extends State<KeypadWidget> {
     );
   }
 
-  Widget _buildRow(List<String> keys, void Function(String) onPress) {
+  Widget _buildRow(List<String> keys, void Function(String) onPress, ColorScheme colorScheme) {
     return Expanded(
       child: Row(
         children: keys.map((k) {
-          final isSpecial = k == 'C';
+          final isClear = k == 'C';
           return Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(2.0),
-              child: Material(
-                color: isSpecial ? const Color(0xFFEF4444).withValues(alpha: 0.2) : const Color(0xFF334155),
-                borderRadius: BorderRadius.circular(8),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => onPress(k),
-                  child: Center(
-                    child: Text(
-                      k,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isSpecial ? const Color(0xFFF87171) : Colors.white,
-                      ),
-                    ),
+              padding: const EdgeInsets.all(3.0),
+              child: FilledButton.tonal(
+                style: FilledButton.styleFrom(
+                  backgroundColor: isClear ? colorScheme.errorContainer : colorScheme.surfaceContainerHigh,
+                  foregroundColor: isClear ? colorScheme.onErrorContainer : colorScheme.onSurface,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: EdgeInsets.zero,
+                ),
+                onPressed: () => onPress(k),
+                child: Text(
+                  k,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isClear ? colorScheme.error : null,
                   ),
                 ),
               ),
             ),
           );
         }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildActionBtn({
-    required String label,
-    required Color color,
-    required Color textColor,
-    required VoidCallback? onTap,
-    bool isBold = false,
-  }) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Center(
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-        ),
       ),
     );
   }

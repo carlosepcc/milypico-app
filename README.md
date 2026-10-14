@@ -1,81 +1,93 @@
-# Milypico POS - Flutter Edition
+# Milypico POS (Flutter Native)
 
-Punto de Venta (POS) Offline-First desarrollado enteramente en Flutter para la gestión ágil de ventas, carritos dinámicos múltiples, multi-divisa (CUP, USD, EUR, MLC) y sincronización con Google Drive.
+Punto de Venta (POS) Offline-First desarrollado en **Flutter** con arquitectura **Material Design 3**, diseñado para la gestión rápida de ventas en gastronomía y comercio con soporte multi-moneda (CUP, USD, EUR, MLC), carritos múltiples concurrentes por cliente y turnos de caja.
 
-## 📱 Características Principales
+---
 
-- **Offline-First:** Funciona de forma 100% autónoma sin depender de conexión a internet.
-- **Teclado Táctil Integrado:** Teclado numérico ergonómico para ingreso de cantidades, decimales, pasos rápidos (+1, +5, -1) y bloqueo de líneas.
-- **Carritos Múltiples:** Gestión simultánea de carritos por cliente (#1, #2, #3...) con códigos de color.
-- **Multi-Divisa en Tiempo Real:** Configuración de tasas de cambio respecto al Peso Cubano (CUP), conversión automática del total y cálculo de vuelto en divisas extranjeras o CUP.
-- **Tarifas de Precios Flexibles:** Precios normales, mayoristas, de oferta o personalizados por ítem.
-- **Sesiones de Caja:** Apertura y cierre de turnos de caja con generación automática de nombres ("16 Sep", "16 Sep (2)"), auditoría de ventas, métricas y desglose por moneda.
-- **Respaldo & Sincronización:** Exportación e importación de respaldo JSON completo y sincronización con Google Drive.
+## 🛠️ Cómo abrir y ejecutar en Android Studio
 
-## 🚀 Requisitos y Ejecución
+1. **Clonar el repositorio:**
+   ```bash
+   git clone <url-del-repositorio> milypico_pos
+   cd milypico_pos
+   ```
 
-### Prerrequisitos
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (versión >= 3.0.0)
-- Dart SDK
+2. **Abrir en Android Studio:**
+   - Abre Android Studio.
+   - Selecciona **Open** (o **File > Open...**).
+   - Elige la carpeta raíz del proyecto (`milypico_pos`).
+   - Android Studio detectará automáticamente el archivo `pubspec.yaml` y la configuración de Flutter/Android.
 
-### Instalación de dependencias
-```bash
-flutter pub get
+3. **Instalar dependencias:**
+   - Haz clic en **Pub get** en la barra superior de Android Studio, o en la terminal:
+   ```bash
+   flutter pub get
+   ```
+
+4. **Ejecutar en emulador o dispositivo físico:**
+   - Selecciona tu dispositivo o emulador Android (API 21+) en el menú desplegable.
+   - Presiona el botón verde de **Run** (o `Shift + F10`).
+   - O por terminal:
+   ```bash
+   flutter run -d android
+   ```
+
+---
+
+## 🏗️ Arquitectura del Proyecto
+
+```text
+├── pubspec.yaml                     # Configuración del proyecto, dependencias y assets
+├── analysis_options.yaml            # Reglas oficiales del linter de Dart/Flutter
+├── android/                         # Configuración Gradle y AndroidManifest para Android Studio
+│   ├── build.gradle
+│   ├── settings.gradle
+│   └── app/
+│       ├── build.gradle             # applicationId "com.milypico.pos", compileSdk 34, minSdk 21
+│       └── src/main/
+│           ├── AndroidManifest.xml
+│           └── kotlin/com/milypico/pos/MainActivity.kt
+└── lib/
+    ├── main.dart                    # Punto de entrada con tema Material Design 3 dinámico
+    ├── models/
+    │   ├── product.dart             # Modelo de Producto, unidades (u/lb) y tarifas
+    │   ├── cart.dart                # Carritos dinámicos y CartItem con bloqueo de línea
+    │   ├── session.dart             # Turnos de caja, ventas por divisa y arqueos
+    │   ├── transaction.dart         # Registro histórico de tickets de venta
+    │   ├── currency.dart            # Tasas de cambio relativas a CUP
+    │   ├── settings.dart            # Configuración de usuario, haptics y cliente Google
+    │   └── backup.dart              # Esquema de serialización de respaldo JSON
+    ├── providers/
+    │   └── pos_provider.dart        # Estado reactivo global con ChangeNotifier (Provider)
+    ├── services/
+    │   ├── local_storage_service.dart# Persistencia offline en SharedPreferences con seed inicial
+    │   └── backup_service.dart      # Generación y restauración de copias de seguridad
+    ├── screens/
+    │   ├── home_screen.dart         # Navegación principal con NavigationBar M3
+    │   ├── pos_screen.dart          # Caja POS con clientes concurrentes y catálogo
+    │   ├── sessions_screen.dart     # Gestión de apertura y cierre de turnos de caja
+    │   ├── catalog_screen.dart      # Administración de productos, precios y categorías
+    │   ├── currencies_screen.dart   # Modificación y creación de tasas de cambio
+    │   └── settings_screen.dart     # Preferencias, tema claro/oscuro y respaldo
+    └── widgets/
+        ├── keypad_widget.dart       # Teclado táctil ergonómico (+1, +5, -1, C, ⌫) y bloqueo
+        ├── checkout_dialog.dart     # Modal BottomSheet de cobro multi-divisa con cálculo de cambio
+        ├── price_tier_dialog.dart   # Selector de tarifa (Normal, Mayorista, Oferta, Personalizado)
+        ├── session_metrics_dialog.dart# Desglose de KPIs y ranking de productos más vendidos
+        └── session_history_dialog.dart# Historial de turnos archivados
 ```
 
-### Ejecutar en modo desarrollo
+---
+
+## 🚀 Compilación para Producción
+
 ```bash
-# En el navegador Web
-flutter run -d chrome
-
-# En un emulador o dispositivo Android
-flutter run -d android
-
-# En un simulador iOS o dispositivo Apple
-flutter run -d ios
-```
-
-### Compilar para Producción
-```bash
-# APK de Android
+# APK instalable para Android
 flutter build apk --release
 
-# Bundle de Android para Google Play Store
+# App Bundle (AAB) para Google Play Store
 flutter build appbundle --release
 
 # Versión Web
 flutter build web --release
-```
-
-## 📂 Arquitectura del Proyecto
-
-```text
-lib/
-├── main.dart                      # Punto de entrada de la aplicación y temas Material 3
-├── models/
-│   ├── product.dart               # Modelo de Producto, unidades (u/lb) y tarifas
-│   ├── cart.dart                  # Modelo de Carrito y CartItem con bloqueo
-│   ├── session.dart               # Sesión de caja, totales y ventas por divisa
-│   ├── transaction.dart           # Registro de transacciones y tickets
-│   ├── currency.dart              # Tasas de cambio multi-moneda
-│   ├── settings.dart              # Preferencias y opciones de usuario
-│   └── backup.dart                # Esquema de serialización de respaldo
-├── providers/
-│   └── pos_provider.dart          # Gestión de estado global reactivo (ChangeNotifier)
-├── services/
-│   ├── local_storage_service.dart # Persistencia offline con SharedPreferences
-│   └── backup_service.dart        # Generación y validación de JSON de respaldo
-├── screens/
-│   ├── home_screen.dart           # Navegación principal Material 3
-│   ├── pos_screen.dart            # Pantalla de venta, catálogo y teclado táctil
-│   ├── sessions_screen.dart       # Gestión de turnos y arqueos de caja
-│   ├── catalog_screen.dart        # Administración de productos y precios
-│   ├── currencies_screen.dart     # Gestión de tasas de cambio y monedas
-│   └── settings_screen.dart       # Opciones de sistema, haptics y respaldo
-└── widgets/
-    ├── keypad_widget.dart         # Teclado numérico táctil y barra de producto
-    ├── checkout_dialog.dart       # Modal de cobro con selector de divisa y cálculo de vuelto
-    ├── price_tier_dialog.dart     # Selector de tarifas (normal, mayorista, oferta)
-    ├── session_metrics_dialog.dart# Desglose de KPIs y productos más vendidos
-    └── session_history_dialog.dart# Historial de sesiones cerradas
 ```

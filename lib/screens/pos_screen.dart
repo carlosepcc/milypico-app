@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/pos_provider.dart';
 import '../models/product.dart';
 import '../widgets/keypad_widget.dart';
+import '../widgets/checkout_dialog.dart';
 
 class POSScreen extends StatefulWidget {
   const POSScreen({super.key});
@@ -14,7 +15,7 @@ class POSScreen extends StatefulWidget {
 class _POSScreenState extends State<POSScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
-  double _keypadHeight = 280;
+  double _keypadHeight = 290;
 
   @override
   void dispose() {
@@ -22,31 +23,15 @@ class _POSScreenState extends State<POSScreen> {
     super.dispose();
   }
 
-  Color _getCartColor(String colorName) {
-    switch (colorName) {
-      case 'emerald':
-        return const Color(0xFF10B981);
-      case 'amber':
-        return const Color(0xFFF59E0B);
-      case 'rose':
-        return const Color(0xFFF43F5E);
-      case 'purple':
-        return const Color(0xFFA855F7);
-      case 'indigo':
-        return const Color(0xFF6366F1);
-      case 'sky':
-      default:
-        return const Color(0xFF0EA5E9);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final pos = context.watch<POSProvider>();
     final activeCarts = pos.activeCarts;
     final currentCart = pos.currentCart;
+    final currentSession = pos.currentSession;
 
-    // Filter products
     final filteredProducts = pos.products.where((p) {
       final matchesCat = pos.selectedCategory == 'Todos' || p.category == pos.selectedCategory;
       final matchesSearch = _searchQuery.isEmpty ||
@@ -55,16 +40,50 @@ class _POSScreenState extends State<POSScreen> {
       return matchesCat && matchesSearch;
     }).toList();
 
+    final cartTotal = currentCart?.calculateTotal(pos.productLookup) ?? 0.0;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Caja POS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(
+              currentSession != null ? 'Sesión: ${currentSession.name}' : 'Sin sesión abierta',
+              style: TextStyle(
+                fontSize: 12,
+                color: currentSession != null ? colorScheme.primary : colorScheme.error,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (currentCart != null && currentCart.items.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: FilledButton.tonalIcon(
+                icon: const Icon(Icons.point_of_sale, size: 18),
+                label: Text('\$${cartTotal.toStringAsFixed(0)}'),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => CheckoutDialog(cart: currentCart),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Carts Bar
+            // Carts Strip (Material 3 Horizontal Chips with Badges)
             Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              color: const Color(0xFF1E293B),
+              height: 52,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              color: colorScheme.surfaceContainerLowest,
               child: Row(
                 children: [
                   Expanded(
@@ -73,73 +92,40 @@ class _POSScreenState extends State<POSScreen> {
                       itemCount: activeCarts.length,
                       itemBuilder: (context, idx) {
                         final cart = activeCarts[idx];
-                        final isCurrent = idx == pos.activeCartIndex;
-                        final color = _getCartColor(cart.color);
+                        final isSelected = idx == pos.activeCartIndex;
                         final itemCount = cart.items.fold(0.0, (sum, i) => sum + i.quantity);
 
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: () => pos.setActiveCartIndex(idx),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: isCurrent ? color.withValues(alpha: 0.25) : const Color(0xFF0F172A),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isCurrent ? color : Colors.white24,
-                                  width: isCurrent ? 2 : 1,
-                                ),
+                          child: Badge(
+                            isLabelVisible: itemCount > 0,
+                            label: Text(
+                              itemCount % 1 == 0 ? itemCount.toInt().toString() : itemCount.toStringAsFixed(1),
+                            ),
+                            backgroundColor: colorScheme.primary,
+                            textColor: colorScheme.onPrimary,
+                            child: FilterChip(
+                              selected: isSelected,
+                              showCheckmark: false,
+                              avatar: Icon(
+                                Icons.shopping_cart_outlined,
+                                size: 16,
+                                color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '#${cart.number}',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  if (itemCount > 0) ...[
-                                    const SizedBox(width: 4),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: color,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        itemCount % 1 == 0 ? itemCount.toInt().toString() : itemCount.toStringAsFixed(1),
-                                        style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ],
-                                  if (isCurrent && activeCarts.length > 1) ...[
-                                    const SizedBox(width: 4),
-                                    InkWell(
-                                      onTap: () => pos.deleteCart(cart.id),
-                                      child: const Icon(Icons.close, size: 14, color: Colors.white60),
-                                    ),
-                                  ],
-                                ],
-                              ),
+                              label: Text('Cliente #${cart.number}'),
+                              onSelected: (_) => pos.setActiveCartIndex(idx),
+                              onDeleted: activeCarts.length > 1 && isSelected
+                                  ? () => pos.deleteCart(cart.id)
+                                  : null,
+                              deleteIcon: const Icon(Icons.close, size: 14),
                             ),
                           ),
                         );
                       },
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Color(0xFF34D399), size: 20),
+                  IconButton.filledTonal(
+                    icon: const Icon(Icons.add, size: 18),
                     tooltip: 'Nuevo Carrito',
                     onPressed: () => pos.createCart(),
                   ),
@@ -147,93 +133,81 @@ class _POSScreenState extends State<POSScreen> {
               ),
             ),
 
-            // Search & Categories Filter Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              color: const Color(0xFF1E293B).withValues(alpha: 0.6),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: 36,
-                      child: TextField(
-                        controller: _searchCtrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'Buscar productos...',
-                          hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                          prefixIcon: const Icon(Icons.search, size: 18, color: Colors.white38),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 16, color: Colors.white38),
-                                  onPressed: () {
-                                    _searchCtrl.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-                          filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        onChanged: (val) => setState(() => _searchQuery = val),
-                      ),
+            // Search Bar & Category Filter
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: SizedBox(
+                height: 44,
+                child: TextField(
+                  controller: _searchCtrl,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar productos por nombre o categoría...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      height: 36,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: pos.categories.length,
-                        itemBuilder: (context, idx) {
-                          final cat = pos.categories[idx];
-                          final isSelected = cat == pos.selectedCategory;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: ChoiceChip(
-                              label: Text(cat, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : Colors.white70)),
-                              selected: isSelected,
-                              selectedColor: const Color(0xFF10B981),
-                              backgroundColor: const Color(0xFF0F172A),
-                              onSelected: (_) => pos.setSelectedCategory(cat),
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                ),
               ),
             ),
+
+            // Categories Filter Chips
+            SizedBox(
+              height: 44,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                itemCount: pos.categories.length,
+                itemBuilder: (context, idx) {
+                  final cat = pos.categories[idx];
+                  final isSelected = cat == pos.selectedCategory;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(cat, style: const TextStyle(fontSize: 12)),
+                      selected: isSelected,
+                      onSelected: (_) => pos.setSelectedCategory(cat),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const Divider(height: 1),
 
             // Products Grid View
             Expanded(
               child: filteredProducts.isEmpty
                   ? Center(
                       child: Text(
-                        pos.products.isEmpty ? 'El catálogo está vacío' : 'No hay productos que coincidan',
-                        style: const TextStyle(color: Colors.white54),
+                        pos.products.isEmpty
+                            ? 'El catálogo está vacío'
+                            : 'No hay productos que coincidan',
+                        style: TextStyle(color: colorScheme.onSurfaceVariant),
                       ),
                     )
                   : LayoutBuilder(
                       builder: (context, constraints) {
                         final crossAxisCount = (constraints.maxWidth / 160).clamp(2, 6).toInt();
                         return GridView.builder(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(10),
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: crossAxisCount,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
                             childAspectRatio: 1.15,
                           ),
                           itemCount: filteredProducts.length,
@@ -241,7 +215,6 @@ class _POSScreenState extends State<POSScreen> {
                             final prod = filteredProducts[index];
                             final isSelected = prod.id == pos.selectedProductId;
 
-                            // Quantity in current cart
                             final item = currentCart?.items.firstWhere(
                               (i) => i.productId == prod.id,
                               orElse: () => CartItem(id: '', productId: '', quantity: 0),
@@ -249,89 +222,73 @@ class _POSScreenState extends State<POSScreen> {
                             final double cartQty = item?.quantity ?? 0.0;
                             final bool isLocked = item?.isLocked ?? false;
 
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () {
-                                if (isSelected) {
-                                  // Quick add if already selected
-                                  if (currentCart != null) {
-                                    pos.addItemToCart(currentCart.id, prod.id);
-                                  }
-                                } else {
-                                  pos.setSelectedProductId(prod.id);
-                                }
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF1E293B) : const Color(0xFF1E293B).withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isSelected ? const Color(0xFF34D399) : Colors.white.withValues(alpha: 0.08),
-                                    width: isSelected ? 2 : 1,
-                                  ),
+                            return Card(
+                              elevation: isSelected ? 3 : 0,
+                              color: isSelected
+                                  ? colorScheme.secondaryContainer
+                                  : colorScheme.surfaceContainerLow,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? colorScheme.primary
+                                      : colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                  width: isSelected ? 2 : 1,
                                 ),
-                                padding: const EdgeInsets.all(8),
-                                child: Stack(
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(prod.emoji, style: const TextStyle(fontSize: 26)),
-                                            const Spacer(),
-                                            if (cartQty > 0)
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: isLocked ? Colors.amber : const Color(0xFF10B981),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                child: Text(
-                                                  '${cartQty % 1 == 0 ? cartQty.toInt() : cartQty.toStringAsFixed(1)} ${prod.unit == UnitType.lb ? 'lb' : 'u'}',
-                                                  style: const TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () {
+                                  if (isSelected && currentCart != null) {
+                                    pos.addItemToCart(currentCart.id, prod.id);
+                                  } else {
+                                    pos.setSelectedProductId(prod.id);
+                                  }
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(prod.emoji, style: const TextStyle(fontSize: 26)),
+                                          if (cartQty > 0)
+                                            Badge(
+                                              label: Text(
+                                                '${cartQty % 1 == 0 ? cartQty.toInt() : cartQty.toStringAsFixed(1)} ${prod.unit == UnitType.lb ? 'lb' : 'u'}',
+                                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                                               ),
-                                          ],
-                                        ),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              prod.name,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                              backgroundColor: isLocked ? colorScheme.error : colorScheme.primary,
                                             ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '\$${prod.normalPrice.toStringAsFixed(0)} CUP',
-                                              style: const TextStyle(
-                                                color: Color(0xFF34D399),
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    if (isLocked)
-                                      const Positioned(
-                                        top: 28,
-                                        right: 0,
-                                        child: Icon(Icons.lock, size: 14, color: Colors.amber),
+                                        ],
                                       ),
-                                  ],
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            prod.name,
+                                            style: theme.textTheme.titleSmall?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '\$${prod.normalPrice.toStringAsFixed(0)} CUP',
+                                            style: TextStyle(
+                                              color: colorScheme.primary,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
@@ -341,7 +298,7 @@ class _POSScreenState extends State<POSScreen> {
                     ),
             ),
 
-            // Resizable Keypad
+            // Material 3 Tactile Keypad
             KeypadWidget(
               height: _keypadHeight,
               onHeightChanged: (newH) => setState(() => _keypadHeight = newH),

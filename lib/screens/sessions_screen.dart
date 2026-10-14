@@ -10,18 +10,18 @@ class SessionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final pos = context.watch<POSProvider>();
     final currentSession = pos.currentSession;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Sesión de Caja', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text('Turnos de Caja', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history, color: Colors.white70),
-            tooltip: 'Historial de Sesiones',
+            icon: const Icon(Icons.history),
+            tooltip: 'Historial de Turnos',
             onPressed: () {
               showDialog(
                 context: context,
@@ -31,7 +31,7 @@ class SessionsScreen extends StatelessWidget {
           ),
           if (currentSession != null)
             IconButton(
-              icon: const Icon(Icons.analytics_outlined, color: Color(0xFF34D399)),
+              icon: const Icon(Icons.analytics_outlined),
               tooltip: 'Métricas de la Sesión',
               onPressed: () {
                 showDialog(
@@ -44,236 +44,239 @@ class SessionsScreen extends StatelessWidget {
       ),
       body: currentSession == null
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      shape: BoxShape.circle,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: colorScheme.surfaceContainerHigh,
+                      child: Icon(Icons.lock_clock, size: 40, color: colorScheme.primary),
                     ),
-                    child: const Icon(Icons.lock_clock, size: 64, color: Colors.amberAccent),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No hay ninguna sesión abierta',
-                    style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Abre una nueva sesión para registrar ventas y cobrar.',
-                    style: TextStyle(color: Colors.white60, fontSize: 14),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 20),
+                    Text(
+                      'No hay ningún turno abierto',
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('ABRIR NUEVA SESIÓN', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    onPressed: () => pos.openSession(),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Abre una nueva sesión de caja para despachar y registrar cobros en el sistema.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      ),
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('ABRIR NUEVA SESIÓN', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: () => pos.openSession(),
+                    ),
+                  ],
+                ),
               ),
             )
           : Column(
               children: [
-                // Session Header Banner
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: const Color(0xFF1E293B),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Active Session Summary Card
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card.filled(
+                    color: colorScheme.surfaceContainerHigh,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF34D399),
-                                      shape: BoxShape.circle,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Badge(
+                                        backgroundColor: colorScheme.primary,
+                                        smallSize: 10,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        currentSession.name,
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(height: 4),
                                   Text(
-                                    currentSession.name,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    'Iniciada: ${DateFormat('dd MMM yyyy, HH:mm', 'es_ES').format(DateTime.fromMillisecondsSinceEpoch(currentSession.createdTime))}',
+                                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Iniciada el ${DateFormat('dd MMM yyyy, HH:mm', 'es_ES').format(DateTime.fromMillisecondsSinceEpoch(currentSession.createdTime))}',
-                                style: const TextStyle(color: Colors.white60, fontSize: 12),
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: colorScheme.error,
+                                  side: BorderSide(color: colorScheme.error),
+                                ),
+                                icon: const Icon(Icons.stop_circle_outlined, size: 18),
+                                label: const Text('Cerrar Turno'),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('¿Cerrar Sesión Actual?'),
+                                      content: Text(
+                                        'Se registrará el cierre de ${currentSession.name} con un total acumulado de \$${currentSession.totalSalesCUP.toStringAsFixed(0)} CUP.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text('Cancelar'),
+                                          onPressed: () => Navigator.of(ctx).pop(),
+                                        ),
+                                        FilledButton(
+                                          style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+                                          child: const Text('Cerrar Ahora'),
+                                          onPressed: () {
+                                            Navigator.of(ctx).pop();
+                                            pos.closeSession();
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.2),
-                              foregroundColor: const Color(0xFFF87171),
-                              side: const BorderSide(color: Color(0xFFEF4444)),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            icon: const Icon(Icons.stop_circle_outlined, size: 18),
-                            label: const Text('Cerrar Caja'),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  backgroundColor: const Color(0xFF1E293B),
-                                  title: const Text('¿Cerrar Sesión Actual?', style: TextStyle(color: Colors.white)),
-                                  content: Text(
-                                    'Se registrará el cierre de ${currentSession.name} con un total acumulado de \$${currentSession.totalSalesCUP.toStringAsFixed(0)} CUP.',
-                                    style: const TextStyle(color: Colors.white70),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Card.filled(
+                                  color: colorScheme.primaryContainer,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'TOTAL VENTAS',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '\$${currentSession.totalSalesCUP.toStringAsFixed(0)} CUP',
+                                          style: TextStyle(
+                                            color: colorScheme.onPrimaryContainer,
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
-                                      onPressed: () => Navigator.of(ctx).pop(),
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                                      child: const Text('Cerrar Ahora', style: TextStyle(color: Colors.white)),
-                                      onPressed: () {
-                                        Navigator.of(ctx).pop();
-                                        pos.closeSession();
-                                      },
-                                    ),
-                                  ],
                                 ),
-                              );
-                            },
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Card.filled(
+                                  color: colorScheme.secondaryContainer,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'TICKETS COBRADOS',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.onSecondaryContainer.withValues(alpha: 0.8),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${currentSession.transactions.length}',
+                                          style: TextStyle(
+                                            color: colorScheme.onSecondaryContainer,
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      // Sales Summary Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('TOTAL ACUMULADO', style: TextStyle(color: Colors.white60, fontSize: 11)),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '\$${currentSession.totalSalesCUP.toStringAsFixed(0)} CUP',
-                                    style: const TextStyle(color: Color(0xFF34D399), fontSize: 20, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('VENTAS REALIZADAS', style: TextStyle(color: Colors.white60, fontSize: 11)),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${currentSession.transactions.length}',
-                                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
 
-                // Transactions List Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Registro de Ventas',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        '${currentSession.transactions.length} tickets',
-                        style: const TextStyle(color: Colors.white60, fontSize: 13),
-                      ),
+                      Text('Registro de Ventas', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      Text('${currentSession.transactions.length} ventas', style: TextStyle(color: colorScheme.onSurfaceVariant)),
                     ],
                   ),
                 ),
 
-                // Transactions ListView
                 Expanded(
                   child: currentSession.transactions.isEmpty
-                      ? const Center(
-                          child: Text('No hay transacciones aún en esta sesión.', style: TextStyle(color: Colors.white54)),
+                      ? Center(
+                          child: Text(
+                            'No se han registrado ventas en este turno aún',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                          ),
                         )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           itemCount: currentSession.transactions.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 6),
                           itemBuilder: (context, index) {
                             final tx = currentSession.transactions[index];
-                            final timeStr = DateFormat('HH:mm:ss')
-                                .format(DateTime.fromMillisecondsSinceEpoch(tx.timestamp));
+                            final timeStr = DateFormat('HH:mm:ss').format(DateTime.fromMillisecondsSinceEpoch(tx.timestamp));
 
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1E293B),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                              ),
+                            return Card.outlined(
                               child: ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor: const Color(0xFF0F172A),
+                                  backgroundColor: colorScheme.surfaceContainerHighest,
                                   child: Text(
                                     '#${tx.cartNumber}',
-                                    style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.bold, fontSize: 12),
+                                    style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 title: Text(
                                   tx.items.map((i) => '${i.quantity % 1 == 0 ? i.quantity.toInt() : i.quantity}x ${i.name}').join(', '),
-                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Text(
                                   '$timeStr • Pago en ${tx.paymentCurrency} (${tx.paymentAmount.toStringAsFixed(2)})',
-                                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
                                 ),
                                 trailing: Text(
                                   '\$${tx.totalCUP.toStringAsFixed(0)} CUP',
-                                  style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.bold, fontSize: 15),
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
                             );

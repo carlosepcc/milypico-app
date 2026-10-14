@@ -9,9 +9,8 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0F172A),
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
     ),
   );
   runApp(const MilypicoApp());
@@ -26,52 +25,88 @@ class MilypicoApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => POSProvider()),
       ],
-      child: MaterialApp(
-        title: 'Milypico POS',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF10B981),
-            onPrimary: Colors.white,
-            secondary: Color(0xFF38BDF8),
-            onSecondary: Colors.white,
-            surface: Color(0xFF1E293B),
-            onSurface: Colors.white,
-            error: Color(0xFFEF4444),
-          ),
-          scaffoldBackgroundColor: const Color(0xFF0F172A),
-          cardColor: const Color(0xFF1E293B),
-          navigationBarTheme: NavigationBarThemeData(
-            labelTextStyle: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return const TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold);
-              }
-              return const TextStyle(color: Colors.white60, fontSize: 11);
-            }),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: const Color(0xFF0F172A),
-            labelStyle: const TextStyle(color: Colors.white70),
-            hintStyle: const TextStyle(color: Colors.white38),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      child: Consumer<POSProvider>(
+        builder: (context, pos, _) {
+          const seed = Color(0xFF006C4C); // Material 3 Emerald/Teal seed
+
+          ThemeMode themeMode = ThemeMode.system;
+          if (pos.settings.theme == 'dark') {
+            themeMode = ThemeMode.dark;
+          } else if (pos.settings.theme == 'light') {
+            themeMode = ThemeMode.light;
+          }
+
+          return MaterialApp(
+            title: 'Milypico POS',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeMode,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: seed,
+                brightness: Brightness.light,
+              ),
+              appBarTheme: const AppBarTheme(
+                centerTitle: false,
+                scrolledUnderElevation: 2.0,
+              ),
+              cardTheme: CardTheme(
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              bottomSheetTheme: const BottomSheetThemeData(
+                showDragHandle: true,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              navigationBarTheme: const NavigationBarThemeData(
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            darkTheme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: seed,
+                brightness: Brightness.dark,
+              ),
+              appBarTheme: const AppBarTheme(
+                centerTitle: false,
+                scrolledUnderElevation: 2.0,
+              ),
+              cardTheme: CardTheme(
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              bottomSheetTheme: const BottomSheetThemeData(
+                showDragHandle: true,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              navigationBarTheme: const NavigationBarThemeData(
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-            ),
-          ),
-        ),
-        home: const HomeScreen(),
+            home: const HomeScreen(),
+          );
+        },
       ),
     );
   }

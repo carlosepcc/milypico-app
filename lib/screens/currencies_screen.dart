@@ -13,34 +13,35 @@ class CurrenciesScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Tasa de Cambio: ${currency.code}', style: const TextStyle(color: Colors.white)),
+        title: Text('Tasa de Cambio: ${currency.code}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('1 ${currency.code} equivale a cuántos Pesos Cubanos (CUP):', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-            const SizedBox(height: 12),
+            const Text(
+              '1 unidad de esta divisa equivale a cuántos Pesos Cubanos (CUP):',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 14),
             TextField(
               controller: rateCtrl,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Color(0xFF34D399), fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               decoration: const InputDecoration(
-                labelText: 'Tasa a CUP',
+                labelText: 'Tasa en CUP',
                 prefixText: '\$ ',
+                border: OutlineInputBorder(),
               ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+            child: const Text('Cancelar'),
             onPressed: () => Navigator.of(ctx).pop(),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
-            child: const Text('Guardar Tasa', style: TextStyle(color: Colors.white)),
+          FilledButton(
+            child: const Text('Guardar Tasa'),
             onPressed: () {
               final newRate = double.tryParse(rateCtrl.text);
               if (newRate != null && newRate > 0) {
@@ -64,9 +65,7 @@ class CurrenciesScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Añadir Divisa Personalizada', style: TextStyle(color: Colors.white)),
+        title: const Text('Añadir Divisa Personalizada'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -74,39 +73,47 @@ class CurrenciesScreen extends StatelessWidget {
               TextField(
                 controller: codeCtrl,
                 textCapitalization: TextCapitalization.characters,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Código (ej: CAD, GBP, USDT)'),
+                decoration: const InputDecoration(
+                  labelText: 'Código (ej: CAD, GBP, USDT)',
+                  border: OutlineInputBorder(),
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Nombre completo (ej: Dólar Canadiense)'),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre descriptivo (ej: Dólar Canadiense)',
+                  border: OutlineInputBorder(),
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: symbolCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Símbolo (ej: C\$, £)'),
+                decoration: const InputDecoration(
+                  labelText: 'Símbolo (ej: C\$, £)',
+                  border: OutlineInputBorder(),
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: rateCtrl,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(labelText: 'Tasa en CUP (1 unidad = ? CUP)'),
+                decoration: const InputDecoration(
+                  labelText: 'Tasa en CUP (1 unidad = ? CUP)',
+                  prefixText: '\$ ',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ],
           ),
         ),
         actions: [
           TextButton(
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+            child: const Text('Cancelar'),
             onPressed: () => Navigator.of(ctx).pop(),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
-            child: const Text('Añadir', style: TextStyle(color: Colors.white)),
+          FilledButton(
+            child: const Text('Añadir Divisa'),
             onPressed: () {
               final code = codeCtrl.text.trim().toUpperCase();
               final name = nameCtrl.text.trim();
@@ -132,84 +139,81 @@ class CurrenciesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final pos = context.watch<POSProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Tasas de Cambio / Multi-Divisa', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle, color: Color(0xFF34D399), size: 28),
-            tooltip: 'Añadir Divisa',
-            onPressed: () => _showAddCurrencyDialog(context),
-          ),
-        ],
+        title: const Text('Tasas de Cambio', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add),
+        label: const Text('Añadir Divisa'),
+        onPressed: () => _showAddCurrencyDialog(context),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.info_outline, color: Color(0xFF38BDF8), size: 22),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Todas las tasas son relativas a la moneda base (CUP). Al registrar un cobro en otra divisa, el sistema calcula automáticamente la equivalencia y el vuelto.',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+          Card.filled(
+            color: colorScheme.surfaceContainerHigh,
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Todas las tasas son relativas al Peso Cubano (CUP). Al cobrar en otra divisa, el sistema calcula automáticamente la equivalencia y el cambio.',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           ...pos.currencies.map((currency) {
             final isBase = currency.code == 'CUP';
-            return Container(
+            return Card.outlined(
               margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isBase ? const Color(0xFF10B981).withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05),
-                ),
-              ),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: const Color(0xFF0F172A),
+                  backgroundColor: isBase ? colorScheme.primaryContainer : colorScheme.surfaceContainerHighest,
                   child: Text(
                     currency.symbol,
-                    style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: isBase ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 title: Text(
                   '${currency.name} (${currency.code})',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
-                  isBase ? 'Moneda Base del Sistema (1.00)' : '1 ${currency.code} = \$${currency.rateToBase.toStringAsFixed(0)} CUP',
-                  style: TextStyle(color: isBase ? const Color(0xFF34D399) : Colors.white60, fontSize: 13),
+                  isBase
+                      ? 'Moneda Base de Referencia (1.00)'
+                      : '1 ${currency.code} = \$${currency.rateToBase.toStringAsFixed(0)} CUP',
+                  style: TextStyle(
+                    color: isBase ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (!isBase)
                       IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.amberAccent, size: 20),
-                        tooltip: 'Modificar Tasa',
+                        icon: const Icon(Icons.edit_outlined),
+                        tooltip: 'Editar Tasa',
                         onPressed: () => _showEditRateDialog(context, currency),
                       ),
                     if (currency.isCustom)
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Color(0xFFF87171), size: 20),
+                        icon: Icon(Icons.delete_outline, color: colorScheme.error),
                         tooltip: 'Eliminar Divisa',
                         onPressed: () => pos.deleteCustomCurrency(currency.code),
                       ),

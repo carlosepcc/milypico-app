@@ -41,155 +41,120 @@ class _PriceTierDialogState extends State<PriceTierDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final pos = context.read<POSProvider>();
 
-    return Dialog(
-      backgroundColor: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: 360,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Text(widget.product.emoji, style: const TextStyle(fontSize: 24)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.product.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text('Seleccionar Tarifa de Precio:', style: TextStyle(color: Colors.white70, fontSize: 13)),
-            const SizedBox(height: 10),
-
-            _buildTierOption(
-              PriceTier.normal,
-              'Normal',
-              widget.product.normalPrice,
-              Colors.sky,
-            ),
-            if (widget.product.wholesalePrice != null)
-              _buildTierOption(
-                PriceTier.mayorista,
-                'Mayorista',
-                widget.product.wholesalePrice!,
-                Colors.emerald,
-              ),
-            if (widget.product.discountPrice != null)
-              _buildTierOption(
-                PriceTier.oferta,
-                'Oferta',
-                widget.product.discountPrice!,
-                Colors.amber,
-              ),
-            _buildTierOption(
-              PriceTier.personalizado,
-              'Personalizado',
-              double.tryParse(_customPriceCtrl.text) ?? widget.product.normalPrice,
-              Colors.purple,
-              isCustomInput: true,
-            ),
-
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () {
-                final customVal = double.tryParse(_customPriceCtrl.text);
-                pos.updateCartItemTier(
-                  widget.cartId,
-                  widget.cartItem.id,
-                  _selectedTier,
-                  customPrice: _selectedTier == PriceTier.personalizado ? customVal : null,
-                );
-                Navigator.of(context).pop();
-              },
-              child: const Text('APLICAR TARIFA', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTierOption(PriceTier tier, String label, double price, MaterialColor color, {bool isCustomInput = false}) {
-    final isSelected = _selectedTier == tier;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () {
-          setState(() {
-            _selectedTier = tier;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF334155) : const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isSelected ? const Color(0xFF34D399) : Colors.white.withValues(alpha: 0.1),
-              width: isSelected ? 1.5 : 1,
-            ),
-          ),
-          child: Row(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 8,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Icon(
-                isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: isSelected ? const Color(0xFF34D399) : Colors.white54,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
+              Text(widget.product.emoji, style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.product.name,
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Selecciona la tarifa de precio aplicada',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
                 ),
               ),
-              if (!isCustomInput)
-                Text(
-                  '\$${price.toStringAsFixed(0)}',
-                  style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold),
-                )
-              else
-                SizedBox(
-                  width: 90,
-                  height: 36,
-                  child: TextField(
-                    controller: _customPriceCtrl,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.amberAccent, fontSize: 13, fontWeight: FontWeight.bold),
-                    decoration: const InputDecoration(
-                      prefixText: '\$',
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (_) {
-                      setState(() {
-                        _selectedTier = PriceTier.personalizado;
-                      });
-                    },
-                  ),
-                ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ],
           ),
-        ),
+
+          const SizedBox(height: 16),
+
+          RadioListTile<PriceTier>(
+            value: PriceTier.normal,
+            groupValue: _selectedTier,
+            title: const Text('Normal'),
+            subtitle: Text('\$${widget.product.normalPrice.toStringAsFixed(0)} CUP'),
+            onChanged: (val) => setState(() => _selectedTier = val!),
+          ),
+
+          if (widget.product.wholesalePrice != null)
+            RadioListTile<PriceTier>(
+              value: PriceTier.mayorista,
+              groupValue: _selectedTier,
+              title: const Text('Mayorista'),
+              subtitle: Text('\$${widget.product.wholesalePrice!.toStringAsFixed(0)} CUP'),
+              onChanged: (val) => setState(() => _selectedTier = val!),
+            ),
+
+          if (widget.product.discountPrice != null)
+            RadioListTile<PriceTier>(
+              value: PriceTier.oferta,
+              groupValue: _selectedTier,
+              title: const Text('Oferta'),
+              subtitle: Text('\$${widget.product.discountPrice!.toStringAsFixed(0)} CUP'),
+              onChanged: (val) => setState(() => _selectedTier = val!),
+            ),
+
+          RadioListTile<PriceTier>(
+            value: PriceTier.personalizado,
+            groupValue: _selectedTier,
+            title: const Text('Precio Personalizado'),
+            subtitle: _selectedTier == PriceTier.personalizado
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: SizedBox(
+                      height: 44,
+                      child: TextField(
+                        controller: _customPriceCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          prefixText: '\$ ',
+                          suffixText: 'CUP',
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  )
+                : const Text('Ingresa un monto específico'),
+            onChanged: (val) => setState(() => _selectedTier = val!),
+          ),
+
+          const SizedBox(height: 16),
+
+          FilledButton(
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              final customVal = double.tryParse(_customPriceCtrl.text);
+              pos.updateCartItemTier(
+                widget.cartId,
+                widget.cartItem.id,
+                _selectedTier,
+                customPrice: _selectedTier == PriceTier.personalizado ? customVal : null,
+              );
+              Navigator.of(context).pop();
+            },
+            child: const Text('APLICAR TARIFA', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
